@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 type Medicine = {
   id: string;
@@ -32,22 +33,38 @@ const MEDS: Medicine[] = [
 
 const RX_STORE: Prescription[] = [];
 
-@Injectable()
-export class PharmacyService {
-  getAllMedicines() {
-    return MEDS.slice().sort((a, b) => a.name.localeCompare(b.name));
-  }
-
-  createPrescription(input: {
+type inputType = {
     doctor_id: string;
     patient_id: string;
     note?: string;
     items: RxItem[];
-  }) {
+  }
+
+@Injectable()
+export class PharmacyService {
+  constructor(
+    private readonly prisma: PrismaService,
+  ) {}
+
+  getAllMedicines() {
+    return MEDS.slice().sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  async createPrescription(input: inputType, user_id: string) {
+    // verify jwt
+    const found = await this.prisma.patient.findFirst({
+      where: { id: input.patient_id, user_patient_idTouser: { id: user_id } },
+      select: { id: true },
+    });
+    if (!found)
+      throw new ForbiddenException('You do not own this prescription');
+
     if (!input?.doctor_id || !input?.patient_id) {
       return { ok: false, message: 'doctor_id and patient_id are required' };
     }
 
+    console.log("input", input, " user_id", user_id);
+    
     if (!Array.isArray(input.items) || input.items.length === 0) {
       return { ok: false, message: 'items must be a non-empty array' };
     }

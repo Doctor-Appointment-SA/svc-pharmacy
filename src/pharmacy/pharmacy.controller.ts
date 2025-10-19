@@ -1,5 +1,7 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { PharmacyService } from './pharmacy.service';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import type { Request } from 'express';
 
 @Controller('pharmacy')
 export class PharmacyController {
@@ -20,9 +22,12 @@ export class PharmacyController {
   @Get('medicines')
   getMeds() { return this.svc.getAllMedicines(); }
 
+  @UseGuards(JwtAuthGuard)
   @Post('prescriptions')
-  create(@Body() body: any) {
-    const result = this.svc.createPrescription(body);
+  async create(@Body() body: any, @Req() req:Request) {
+    const user:any = req.user;
+    const user_id = user.id;
+    const result = await this.svc.createPrescription(body, user_id);
     return result.ok ? result : { statusCode: 400, message: result.message };
   }
 

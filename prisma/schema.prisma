@@ -1,6 +1,5 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
 }
 
 datasource db {
@@ -9,18 +8,20 @@ datasource db {
 }
 
 model appointment {
-  id           String    @id @db.Uuid
-  patient_id   String?   @db.Uuid
-  doctor_id    String?   @db.Uuid
-  appoint_date DateTime? @db.Timestamp(6)
-  status       String?
-  doctor       doctor?   @relation(fields: [doctor_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  patient      patient?  @relation(fields: [patient_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id           String            @id @db.Uuid
+  patient_id   String?           @db.Uuid
+  doctor_id    String?           @db.Uuid
+  appoint_date DateTime?         @db.Timestamp(6)
+  status       AppointmentStatus @default(PENDING)
+  detail       String?
+  doctor       doctor?           @relation(fields: [doctor_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  patient      patient?          @relation(fields: [patient_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model doctor {
   id             String           @id @db.Uuid
   specialty      String?
+  detail         String?
   appointment    appointment[]
   user           user             @relation(fields: [id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   medical_record medical_record[]
@@ -60,6 +61,9 @@ model notification {
 model patient {
   id                                 String           @id @db.Uuid
   hospital_number                    String?
+  symptom_note                       String?
+  blood_drawn_at                     DateTime?
+  missed_arv_days                    Int?
   appointment                        appointment[]
   medical_record                     medical_record[]
   user_patient_hospital_numberTouser user?            @relation("patient_hospital_numberTouser", fields: [hospital_number], references: [username], onDelete: NoAction, onUpdate: NoAction)
@@ -167,4 +171,11 @@ enum UnitMethod {
   TABLET
   CAPSULE
   SYRUP
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  COMPLETE
+  CANCEL
 }
