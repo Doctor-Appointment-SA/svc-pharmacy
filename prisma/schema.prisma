@@ -1,0 +1,170 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model appointment {
+  id           String    @id @db.Uuid
+  patient_id   String?   @db.Uuid
+  doctor_id    String?   @db.Uuid
+  appoint_date DateTime? @db.Timestamp(6)
+  status       String?
+  doctor       doctor?   @relation(fields: [doctor_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  patient      patient?  @relation(fields: [patient_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model doctor {
+  id             String           @id @db.Uuid
+  specialty      String?
+  appointment    appointment[]
+  user           user             @relation(fields: [id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  medical_record medical_record[]
+  prescription   prescription[]
+  schedule       schedule[]
+}
+
+model medical_record {
+  id         String   @id @db.Uuid
+  doctor_id  String?  @db.Uuid
+  patient_id String?  @db.Uuid
+  diagnosis  String?  @db.VarChar
+  notes      String?  @db.VarChar
+  createdAt  Int?
+  doctor     doctor?  @relation(fields: [doctor_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  patient    patient? @relation(fields: [patient_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model medication {
+  id                String              @id @db.Uuid
+  name              String?
+  description       String?
+  price             Float?
+  strength          Float?
+  unit              UnitMethod?
+  prescription_item prescription_item[]
+}
+
+model notification {
+  id      String  @id @db.Uuid
+  user_id String? @db.Uuid
+  title   String?
+  message String?
+  user    user?   @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model patient {
+  id                                 String           @id @db.Uuid
+  hospital_number                    String?
+  appointment                        appointment[]
+  medical_record                     medical_record[]
+  user_patient_hospital_numberTouser user?            @relation("patient_hospital_numberTouser", fields: [hospital_number], references: [username], onDelete: NoAction, onUpdate: NoAction)
+  user_patient_idTouser              user             @relation("patient_idTouser", fields: [id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  prescription                       prescription[]
+}
+
+model payment {
+  id              String         @id @db.Uuid
+  prescription_id String         @unique @db.Uuid
+  created_at      DateTime?      @db.Timestamp(6)
+  status          PaymentStatus  @default(PENDING)
+  method          PaymentMethod?
+  cost            Float?
+  prescription    prescription   @relation(fields: [prescription_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  tracking        tracking?
+}
+
+model prescription {
+  id                String              @id @db.Uuid
+  patient_id        String?             @db.Uuid
+  doctor_id         String?             @db.Uuid
+  status            String?
+  created_at        DateTime?           @db.Timestamp(6)
+  payment           payment?
+  doctor            doctor?             @relation(fields: [doctor_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  patient           patient?            @relation(fields: [patient_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  prescription_item prescription_item[]
+}
+
+model prescription_item {
+  id              String        @id @db.Uuid
+  medication_id   String?       @db.Uuid
+  amount          Int?
+  prescription_id String?       @db.Uuid
+  medication      medication?   @relation(fields: [medication_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  prescription    prescription? @relation(fields: [prescription_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model refresh_token {
+  id        String   @id @db.Uuid
+  userId    String   @unique @db.Uuid
+  hashed    String
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model schedule {
+  id        String  @id @db.Uuid
+  doctor_id String? @db.Uuid
+  timeslot  String?
+  doctor    doctor? @relation(fields: [doctor_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model tracking {
+  id         String          @id @db.Uuid
+  payment_id String?         @unique @db.Uuid
+  status     TrackingStatus?
+  location   String?
+  payment    payment?        @relation(fields: [payment_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model user {
+  id                                    String         @id @db.Uuid
+  password                              String?        @db.VarChar
+  createdAt                             DateTime?      @db.Timestamp(6)
+  role                                  String?
+  id_card                               String         @unique
+  username                              String?        @unique(map: "user_username_unique")
+  lastname                              String?
+  name                                  String?
+  phone                                 String?
+  health_benefits                       String[]
+  doctor                                doctor?
+  notification                          notification[]
+  patient_patient_hospital_numberTouser patient[]      @relation("patient_hospital_numberTouser")
+  patient_patient_idTouser              patient?       @relation("patient_idTouser")
+  refresh_token                         refresh_token?
+}
+
+enum PaymentMethod {
+  CREDIT
+  PROMPTPAY
+  BANK
+  CASH
+}
+
+enum PaymentStatus {
+  PENDING
+  CANCEL
+  SUCCESS
+}
+
+enum TrackingStatus {
+  PREPARE
+  SENDING
+  SUCCESS
+}
+
+enum UnitMethod {
+  TABLET
+  CAPSULE
+  SYRUP
+}
