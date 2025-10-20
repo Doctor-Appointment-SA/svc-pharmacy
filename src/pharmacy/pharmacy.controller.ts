@@ -5,32 +5,31 @@ import type { Request } from 'express';
 
 @Controller('pharmacy')
 export class PharmacyController {
-  constructor(private readonly svc: PharmacyService) {}
+    constructor(private readonly svc: PharmacyService) { }
 
-  // NEW: mock doctor/patient context (no auth)
-  @Get('context')
-  getContext(
-    @Query('doctor') doctorFromQuery?: string,
-    @Query('patient') patientFromQuery?: string,
-  ) {
-    // Optionally accept ?doctor=...&patient=... to demo switching
-    const doctor_id = doctorFromQuery || 'doc_demo';
-    const patient_id = patientFromQuery || 'patient_001';
-    return { doctor_id, patient_id };
-  }
+    @Get('context')
+    getContext(@Query('doctor') doctorFromQuery?: string, @Query('patient') patientFromQuery?: string) {
+        const doctor_id = doctorFromQuery || 'doc_demo';
+        const patient_id = patientFromQuery || 'patient_001';
+        return { doctor_id, patient_id };
+    }
 
-  @Get('medicines')
-  getMeds() { return this.svc.getAllMedicines(); }
+    @Get('medicines')
+    getMeds() {
+        return this.svc.getAllMedicines(); // now DB-backed
+    }
 
-  @UseGuards(JwtAuthGuard)
-  @Post('prescriptions')
-  async create(@Body() body: any, @Req() req:Request) {
-    const user:any = req.user;
-    const user_id = user.id;
-    const result = await this.svc.createPrescription(body, user_id);
-    return result.ok ? result : { statusCode: 400, message: result.message };
-  }
+    @UseGuards(JwtAuthGuard)
+    @Post('prescriptions')
+    async create(@Body() body: any, @Req() req: Request) {
+        const user: any = req.user;
+        const user_id = user.id;
+        const result = await this.svc.createPrescription(body, user_id); // now DB-backed
+        return result.ok ? result : { statusCode: 400, message: result.message };
+    }
 
-  @Get('prescriptions')
-  list() { return this.svc.listPrescriptions(); }
+    @Get('prescriptions')
+    list() {
+        return this.svc.listPrescriptions(); // now DB-backed
+    }
 }
