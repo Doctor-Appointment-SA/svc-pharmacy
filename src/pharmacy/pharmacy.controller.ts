@@ -19,7 +19,7 @@ export class PharmacyController {
         return this.svc.getAllMedicines(); // now DB-backed
     }
 
-    @UseGuards(JwtAuthGuard)
+        @UseGuards(JwtAuthGuard) //Temporary disable auth guard for testing
     @Post('prescriptions')
     async create(@Body() body: any, @Req() req: Request) {
         const user: any = req.user;
