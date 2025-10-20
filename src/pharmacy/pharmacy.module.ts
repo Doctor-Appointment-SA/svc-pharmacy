@@ -1,9 +1,11 @@
 import { Module } from '@nestjs/common';
 import { PharmacyController } from './pharmacy.controller';
 import { PharmacyService } from './pharmacy.service';
+import { PrismaModule } from 'src/prisma/prisma.module';
 
 @Module({
-  controllers: [PharmacyController],
-  providers: [PharmacyService],
+    imports: [PrismaModule],
+    controllers: [PharmacyController],
+    providers: [PharmacyService],
 })
-export class PharmacyModule {}
+export class PharmacyModule { }
