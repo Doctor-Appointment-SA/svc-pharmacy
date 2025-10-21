@@ -19,11 +19,12 @@ export class PharmacyController {
         return this.svc.getAllMedicines(); // now DB-backed
     }
 
-        @UseGuards(JwtAuthGuard) //Temporary disable auth guard for testing
+    @UseGuards(JwtAuthGuard) //Temporary disable auth guard for testing
     @Post('prescriptions')
     async create(@Body() body: any, @Req() req: Request) {
         const user: any = req.user;
-        const user_id = user.id;
+        const user_id = user.sub;
+        console.log("user_id", user_id);
         const result = await this.svc.createPrescription(body, user_id); // now DB-backed
         return result.ok ? result : { statusCode: 400, message: result.message };
     }

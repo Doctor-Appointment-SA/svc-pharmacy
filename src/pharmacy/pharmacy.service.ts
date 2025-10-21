@@ -51,10 +51,7 @@ export class PharmacyService {
     /** POST /pharmacy/prescriptions */
     async createPrescription(input: CreateRxInput, user_id: string) {
         // --- Ownership check: patient must belong to current user ---
-        const found = await this.prisma.patient.findFirst({
-            where: { id: input.patient_id, user_patient_idTouser: { id: user_id } },
-            select: { id: true },
-        });
+        const found = (input.doctor_id === user_id);
         if (!found) {
             throw new ForbiddenException('You do not own this prescription');
         }
